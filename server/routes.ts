@@ -86,6 +86,7 @@ function setupMqtt() {
     }
     if (topic === TOPIC_STATUS_CONNECTION) {
       try {
+        
         const payload = JSON.parse(message.toString());
         // update device status
         console.log("Received Payload status connection :", payload);

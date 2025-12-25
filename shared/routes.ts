@@ -74,6 +74,9 @@ export const api = {
       responses: {
         200: z.object({
           online: z.boolean(),
+          ip: z.string().optional(),
+          progress: z.string(),
+          source: z.string(),
           lastSeen: z.string().optional(),
           mqttConnected: z.boolean(),
         }),

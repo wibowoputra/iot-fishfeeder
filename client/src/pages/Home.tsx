@@ -6,6 +6,7 @@ import { FeedLogs } from "@/components/FeedLogs";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { 
   Fish, 
   Wifi, 
@@ -23,16 +24,23 @@ export default function Home() {
 
   const schedules = useSchedules();
   const logs = useFeedLogs();
-  const device = useDeviceStatus();
+  const device = useDeviceStatus();  
   const triggerFeed = useTriggerFeed();
-
   // Derived State
   const isOnline = device.data?.online ?? false;
+  const isMQTTConnected = device.data?.mqttConnected ?? false;
   const lastFeed = logs.data?.find(l => l.status === "SUCCESS");
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const nextSchedule = schedules.data
     ?.filter(s => s.enabled)
-    .sort((a, b) => a.time.localeCompare(b.time))[0];
-
+    .map(s => {
+    const [hour, minute] = s.time.split(':').map(Number);
+    return { ...s, totalMinutes: hour * 60 + minute };
+  })
+  .filter(s => s.totalMinutes > nowMinutes) // hanya yang belum lewat
+  .sort((a, b) => a.totalMinutes - b.totalMinutes)[0];
+  
   const handleManualFeed = async () => {
     try {
       await triggerFeed.mutateAsync();
@@ -74,7 +82,16 @@ export default function Home() {
                 : 'bg-red-50 text-red-700 border-red-200'
             }`}>
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-              {isOnline ? 'System Online' : 'System Offline'}
+              {isOnline ? "IP Device : "+ device.data?.ip : 'Device Offline'}
+            </div>
+        
+            <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2 border ${
+              isMQTTConnected 
+                ? 'bg-green-50 text-green-700 border-green-200' 
+                : 'bg-red-50 text-red-700 border-red-200'
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${isMQTTConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              {isMQTTConnected ? 'MQTT Online' : 'MQTT Offline'}
             </div>
           </div>
         </div>
@@ -86,14 +103,15 @@ export default function Home() {
             value={isOnline ? "Connected" : "Offline"}
             status={isOnline ? "success" : "danger"}
             icon={isOnline ? <Wifi className="w-6 h-6" /> : <WifiOff className="w-6 h-6" />}
-            subtext={device.data?.lastSeen ? `Last seen: ${format(new Date(device.data.lastSeen), 'h:mm a')}` : 'Waiting for connection...'}
+            subtext= {device.data?.lastSeen ? "Last seen: " + format(new Date(device.data.lastSeen), 'h:mm a')  : "Waiting for connection..."}
           />
           <StatusCard
             title="Last Feeding"
-            value={lastFeed ? format(new Date(lastFeed.triggeredAt), 'h:mm a') : "--:--"}
+            value={lastFeed ? formatInTimeZone(new Date(lastFeed.triggeredAt), "UTC",'h:mm a') : "--:--"}
             status="neutral"
             icon={<History className="w-6 h-6" />}
-            subtext={lastFeed ? format(new Date(lastFeed.triggeredAt), 'MMM d, yyyy') : "No records yet"}
+            subtext={lastFeed ? formatInTimeZone(new Date(lastFeed.triggeredAt),"UTC",'MMM d, yyyy')
+              : "No records yet"}
           />
           <StatusCard
             title="Next Scheduled"

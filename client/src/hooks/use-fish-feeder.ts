@@ -98,6 +98,7 @@ export function useDeviceStatus() {
     queryKey: [api.device.status.path],
     queryFn: async () => {
       const res = await fetch(api.device.status.path, { credentials: "include" });
+       console.log("Response useDeviceStatus :", res);
       if (!res.ok) throw new Error("Failed to fetch device status");
       return api.device.status.responses[200].parse(await res.json());
     },

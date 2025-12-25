@@ -2,6 +2,7 @@ import { type FeedLog } from "@shared/schema";
 import { format } from "date-fns";
 import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface FeedLogsProps {
   logs: FeedLog[];
@@ -45,8 +46,15 @@ export function FeedLogs({ logs, isLoading }: FeedLogsProps) {
         {sortedLogs.map((log) => {
           const isSuccess = log.status === "SUCCESS";
           const isFailed = log.status === "FAILED";
-          const date = new Date(log.triggeredAt);
-
+          console.log("RAW:", log.triggeredAt);
+          console.log("DATE:", new Date(log.triggeredAt).toISOString());
+          console.log(
+          formatInTimeZone(
+            new Date(log.triggeredAt),
+            "UTC",
+            "yyyy-MM-dd HH:mm:ss XXX"
+          )
+);           
           return (
             <div key={log.id} className="flex gap-4 items-start group">
               <div className={`
@@ -63,10 +71,15 @@ export function FeedLogs({ logs, isLoading }: FeedLogsProps) {
               <div className="flex-1 pb-4 border-b border-border/50 group-last:border-0">
                 <div className="flex justify-between items-start">
                   <h4 className="text-sm font-semibold text-foreground">
-                    {log.type === "SCHEDULED" ? "Scheduled Feed" : "Manual Feed"}
+                    {log.type === "SCHEDULE" ? "Scheduled Feed" : "Manual Feed"}
                   </h4>
                   <span className="text-xs text-muted-foreground font-mono">
-                    {format(date, 'MMM d, h:mm a')}
+                    {
+                    formatInTimeZone(
+                      new Date(log.triggeredAt),
+                       "UTC",
+                      "MMM d, h:mm a"
+                    )}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">

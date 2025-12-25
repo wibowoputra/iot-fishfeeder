@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+// import 'dotenv/config';
+import 'dotenv/config';
 
 const app = express();
 const httpServer = createServer(app);
@@ -85,14 +87,32 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  
   httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  {
+    port, 
+    host: "localhost",
+  }, 
+  () => {
+      log(`Server running on http://localhost:${port}`);
+  });
+
+//   httpServer.listen(port, () => {
+//   console.log(`Server listening on port ${port}`);
+// });
+
+  // Additionally, serve on Sandbox port 80 for external access
+//   const SANDBOX_PORT = 80;
+//   if (port !== SANDBOX_PORT){
+//   httpServer.listen(
+//     {
+//       port,
+//       host: "0.0.0.0",
+//       reusePort: true,
+//     },
+//     () => {
+//       log(`serving on port ${port}`);
+//     },
+//   );
+// }
 })();
